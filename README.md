@@ -24,7 +24,29 @@
 3. Create a folder `.github/workflows` inside root of the repository if it doesn't exists.
 4. Create a new file `readme-update-actions.yml`  inside `.github/workflows/`  with the following contents:
 
-![](./public/images/readme-blog.png)
+```
+name: Readme Update Blog
+on:
+  schedule: # Run workflow automatically
+    - cron: '0 * * * *' # Runs every hour
+  workflow_dispatch: # Run workflow manually (without waiting for the cron to be called), through the GitHub Actions Workflow page directly
+
+jobs:
+  update-readme-with-blog:
+    name: Update latest blogs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Fetch posts
+        uses: imskr/readme-update-actions@v2
+        with:
+          RSS_LIST: "https://blog.metaprogramming.space/rss.xml" # required
+          MAX_POST: 5  # optional, default 3
+          COMMIT_USER: "commiter"  # optional
+          COMMIT_EMAIL: "someone@example.com" # optional
+          COMMIT_MESSAGE: "Update readme with latest blogs" # optional, offer default msg like this
+```
 
 5. Replace the above URL list with your own RSS feed URLs.
 6. Commit and wait for it to run automatically, or you can also trigger it manually to see the result instantly.
@@ -35,8 +57,3 @@
 <!-- BLOG-LIST-START -->
 <!-- BLOG-LIST-END -->
 
-## Support
-
-<p>
-    <a href="https://buymeacoffee.com/imskr" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-red.png" alt="Buy Me A Coffee" width="150" ></a>
-</p>

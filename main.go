@@ -1,25 +1,22 @@
 package main
 
 import (
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os/exec"
 	"strings"
 
-	medium "github.com/readme-update-actions/pkg/structs"
 	helpers "github.com/readme-update-actions/pkg/utils"
+
+	"github.com/mmcdole/gofeed"
 )
 
 func main() {
 	// get the rss list from the actions env
-	// rss_medium, _ := helpers.GetEnvString("INPUT_RSS_LIST")
-	rss_medium := "https://imskr.medium.com/feed"
+	rss_url, _ := helpers.GetEnvString("RSS_LIST")
 
 	// get the number of posts or stories to commit
-	max_post, _ := helpers.GetEnvInteger("INPUT_MAX_POST")
+	max_post, _ := helpers.GetEnvInteger("MAX_POST")
 
 	// if max_post not in env var set default to 3
 	if max_post == 0 {
@@ -27,7 +24,7 @@ func main() {
 	}
 
 	// get readme path from the actions env
-	readme_path, _ := helpers.GetEnvString("INPUT_README_PATH")
+	readme_path, _ := helpers.GetEnvString("README_PATH")
 
 	// if path not provided default to root readme
 	if readme_path == "" {
@@ -35,42 +32,25 @@ func main() {
 	}
 
 	// get username
-	commit_user, _ := helpers.GetEnvString("INPUT_COMMIT_USER")
+	commit_user, _ := helpers.GetEnvString("COMMIT_USER")
 	if commit_user == "" {
 		commit_user = "readme-update-bot"
 	}
 
 	// git user email
-	commit_email, _ := helpers.GetEnvString("INPUT_COMMIT_EMAIL")
+	commit_email, _ := helpers.GetEnvString("COMMIT_EMAIL")
 	if commit_email == "" {
 		commit_email = "readme-update-actions@example.com"
 	}
 
 	// git commit message
-	commit_message, _ := helpers.GetEnvString("INPUT_COMMIT_MESSAGE")
+	commit_message, _ := helpers.GetEnvString("COMMIT_MESSAGE")
 	if commit_message == "" {
 		commit_message = "Update readme with latest blogs"
 	}
 
-	// get medium.com rss feed
-	mediumResponse, err := http.Get(rss_medium)
-	if err != nil {
-		log.Println("Error making request to medium", err)
-	}
-
-	defer mediumResponse.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(mediumResponse.Body)
-	if err != nil {
-		log.Println("Error reading response body", err)
-	}
-
-	// use RSS structs
-	var rss medium.RSS
-	errXMLParse := xml.Unmarshal(responseBody, &rss)
-	if errXMLParse != nil {
-		log.Println("Error xml parse", errXMLParse)
-	}
+	fp := gofeed.NewParser()
+	feed, _ := fp.ParseURL(rss_url)
 
 	// store the posts
 	var items []string
@@ -78,12 +58,14 @@ func main() {
 	// get the posts
 	// format it according to readme links format
 	for i := 0; i < max_post; i++ {
-		item := fmt.Sprintf("- [%s](%s)\n", rss.Channel.Item[i].Title, rss.Channel.Item[i].Link)
-		items = append(items, item)
+		if i < len(feed.Items) {
+			item := fmt.Sprintf("- [%s](%s)\n", feed.Items[i].Title, feed.Items[i].Link)
+			items = append(items, item)
+		}
 	}
 
 	// find readme and replace with our result
-	err = helpers.ReplaceFile(readme_path, items)
+	err := helpers.ReplaceFile(readme_path, items)
 	if err != nil {
 		log.Fatalf("Error updating readme %s", err)
 	}

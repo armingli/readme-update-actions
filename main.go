@@ -13,10 +13,10 @@ import (
 
 func main() {
 	// get the rss list from the actions env
-	rss_url, _ := helpers.GetEnvString("RSS_LIST")
+	rss_url, _ := helpers.GetEnvString("INPUT_RSS_LIST")
 
 	// get the number of posts or stories to commit
-	max_post, _ := helpers.GetEnvInteger("MAX_POST")
+	max_post, _ := helpers.GetEnvInteger("INPUT_MAX_POST")
 
 	// if max_post not in env var set default to 3
 	if max_post == 0 {
@@ -24,7 +24,7 @@ func main() {
 	}
 
 	// get readme path from the actions env
-	readme_path, _ := helpers.GetEnvString("README_PATH")
+	readme_path, _ := helpers.GetEnvString("INPUT_README_PATH")
 
 	// if path not provided default to root readme
 	if readme_path == "" {
@@ -32,19 +32,19 @@ func main() {
 	}
 
 	// get username
-	commit_user, _ := helpers.GetEnvString("COMMIT_USER")
+	commit_user, _ := helpers.GetEnvString("INPUT_COMMIT_USER")
 	if commit_user == "" {
 		commit_user = "readme-update-bot"
 	}
 
 	// git user email
-	commit_email, _ := helpers.GetEnvString("COMMIT_EMAIL")
+	commit_email, _ := helpers.GetEnvString("INPUT_COMMIT_EMAIL")
 	if commit_email == "" {
 		commit_email = "readme-update-actions@example.com"
 	}
 
 	// git commit message
-	commit_message, _ := helpers.GetEnvString("COMMIT_MESSAGE")
+	commit_message, _ := helpers.GetEnvString("INPUT_COMMIT_MESSAGE")
 	if commit_message == "" {
 		commit_message = "Update readme with latest blogs"
 	}

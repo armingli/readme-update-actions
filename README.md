@@ -51,8 +51,6 @@ jobs:
 5. Replace the above URL list with your own RSS feed URLs.
 6. Commit and wait for it to run automatically, or you can also trigger it manually to see the result instantly.
 
-## Results
-![result](./public/images/results.png)
 
 <!-- BLOG-LIST-START -->
 <!-- BLOG-LIST-END -->

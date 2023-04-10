@@ -81,12 +81,12 @@ func WriteToFile(path string, items []string) {
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
-		if !stop && line == "<!-- DOUBAN-ACTIVITIES:START -->" {
+		if !stop && line == "<!-- BLOG-POST-LIST:START -->" {
 			fmt.Fprintln(w, line)
 			stop = true
 		}
 
-		if line == "<!-- DOUBAN-ACTIVITIES:END -->" {
+		if line == "<!-- BLOG-POST-LIST:END -->" {
 			stop = false
 			for _, item := range items {
 				fmt.Fprintln(w, item)

@@ -57,7 +57,7 @@ func main() {
 
 	// get the posts
 	// format it according to readme links format
-	if len(items) > 0 {
+	if len(feed.Items) > 0 {
 		for i := 0; i < max_post; i++ {
 			if i < len(feed.Items) {
 				item := fmt.Sprintf("- [%s](%s)\n", feed.Items[i].Title, feed.Items[i].Link)
@@ -65,14 +65,12 @@ func main() {
 			}
 		}
 	}
-	
 
 	// find readme and replace with our result
 	err := helpers.ReplaceFile(readme_path, items)
 	if err != nil {
 		log.Fatalf("Error updating readme %s", err)
 	}
-	return
 	// set git user name
 	nameCmd := exec.Command("git", "config", "user.name", commit_user)
 	err = nameCmd.Run()

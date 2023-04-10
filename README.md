@@ -53,5 +53,8 @@ jobs:
 
 
 <!-- BLOG-LIST-START -->
+- [LeetCode之2sum,3sum,4sum](https://blog.metaprogramming.space/post/2.html)
+
+- [利用github的Discussions写博客](https://blog.metaprogramming.space/post/1.html)
 <!-- BLOG-LIST-END -->
 

@@ -1,4 +1,3 @@
-# Make some changes based on Shubham Kumar's work. Thanks for your work.
 name: "Update readme with rss Actions"
 description: "Fetch latest blog posts and add it to GitHub profile's readme dynamically. Support multiple rss format."
 author: "armingli"
@@ -13,32 +12,13 @@ inputs:
     required: false
   max_post:
     description: "Max number of posts"
-    default: "3"
+    default: "5"
     required: false
-  commit_user:
-    description: "Git username"
-    default: "readme-update-bot"
-    required: false
-  commit_email:
-    description: "Git user email"
-    default: "readme-update-actions@example.com"
-    required: false
-  commit_message:
-    description: "Git commit message"
-    default: "Update readme with latest blogs"
-    required: false
-outputs:
-  result_post:
-    description: "Stringified posts in readme format"
+
 
 runs:
   using: "docker"
   image: "Dockerfile"
-  args:
-  - "-rss_list=${{ inputs.rss_list }}"
-  - "-commit_user=${{ inputs.commit_user }}"
-  - "-commit_email=${{ inputs.commit_email }}"
-  - "-commit_message=${{ inputs.commit_message }}"
 
 branding:
   icon: 'file-text'

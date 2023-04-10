@@ -1,52 +1,32 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
-	"os/exec"
+	"os"
+	"strconv"
 	"strings"
-
-	helpers "github.com/readme-update-actions/pkg/utils"
 
 	"github.com/mmcdole/gofeed"
 )
 
 func main() {
 	// get the rss list from the actions env
-	rss_url, _ := helpers.GetEnvString("INPUT_RSS_LIST")
+	rss_url := os.Getenv("INPUT_RSS_LIST")
 
 	// get the number of posts or stories to commit
-	max_post, _ := helpers.GetEnvInteger("INPUT_MAX_POST")
-
-	// if max_post not in env var set default to 3
-	if max_post == 0 {
-		max_post = 3
+	max_post, err := strconv.Atoi(os.Getenv("INPUT_MAX_POST"))
+	if err != nil || max_post == 0 {
+		max_post = 5
 	}
 
 	// get readme path from the actions env
-	readme_path, _ := helpers.GetEnvString("INPUT_README_PATH")
+	readme_path := os.Getenv("INPUT_README_PATH")
 
 	// if path not provided default to root readme
 	if readme_path == "" {
 		readme_path = "./README.md"
-	}
-
-	// get username
-	commit_user, _ := helpers.GetEnvString("INPUT_COMMIT_USER")
-	if commit_user == "" {
-		commit_user = "readme-update-bot"
-	}
-
-	// git user email
-	commit_email, _ := helpers.GetEnvString("INPUT_COMMIT_EMAIL")
-	if commit_email == "" {
-		commit_email = "readme-update-actions@example.com"
-	}
-
-	// git commit message
-	commit_message, _ := helpers.GetEnvString("INPUT_COMMIT_MESSAGE")
-	if commit_message == "" {
-		commit_message = "Update readme with latest blogs"
 	}
 
 	fp := gofeed.NewParser()
@@ -57,64 +37,68 @@ func main() {
 
 	// get the posts
 	// format it according to readme links format
-	if len(feed.Items) > 0 {
+	if feed != nil && len(feed.Items) > 0 {
 		for i := 0; i < max_post; i++ {
 			if i < len(feed.Items) {
-				item := fmt.Sprintf("- [%s](%s)\n", feed.Items[i].Title, feed.Items[i].Link)
+				item := fmt.Sprintf("- [%s](%s)", feed.Items[i].Title, feed.Items[i].Link)
 				items = append(items, item)
+			} else {
+				break
 			}
 		}
 	}
 
 	// find readme and replace with our result
-	err := helpers.ReplaceFile(readme_path, items)
-	if err != nil {
-		log.Fatalf("Error updating readme %s", err)
-	}
-	// set git user name
-	nameCmd := exec.Command("git", "config", "user.name", commit_user)
-	err = nameCmd.Run()
-	if err != nil {
-		log.Fatalf("Error setting git user %s", err)
-	}
+	WriteToFile(readme_path, items)
 
-	// set git user email
-	emailCmd := exec.Command("git", "config", "user.email", commit_email)
-	err = emailCmd.Run()
-	if err != nil {
-		log.Fatalf("Error setting git email %s", err)
-	}
+}
 
-	// check git status
-	statusCmd, err := exec.Command("git", "status").Output()
+func WriteToFile(path string, items []string) {
+	f, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	statusOutput := string(statusCmd)
-	if !strings.Contains(statusOutput, "nothing to commit") {
-		// add to staging area
-		addCmd := exec.Command("git", "add", readme_path)
-		err = addCmd.Run()
-		if err != nil {
-			log.Fatalf("Error adding to staging area %s", err)
-			return
+	var lines []string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err = scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	f.Close()
+
+	f, err = os.Create(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	stop := false
+	w := bufio.NewWriter(f)
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if !stop && line == "<!-- DOUBAN-ACTIVITIES:START -->" {
+			fmt.Fprintln(w, line)
+			stop = true
 		}
 
-		// do git commit
-		commitCmd := exec.Command("git", "commit", "-m", commit_message)
-		err = commitCmd.Run()
-		if err != nil {
-			log.Fatalf("Error commiting to repo %s", err)
-			return
+		if line == "<!-- DOUBAN-ACTIVITIES:END -->" {
+			stop = false
+			for _, item := range items {
+				fmt.Fprintln(w, item)
+			}
 		}
 
-		// do git push
-		pushCmd := exec.Command("git", "push")
-		err = pushCmd.Run()
-		if err != nil {
-			log.Fatalf("Error pushing to repo %s", err)
-			return
+		if !stop {
+			fmt.Fprintln(w, line)
 		}
+
+	}
+	if err = w.Flush(); err != nil {
+		log.Fatal(err)
 	}
 }
